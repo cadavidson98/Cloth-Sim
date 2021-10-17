@@ -1,6 +1,9 @@
 # Cloth-Sim
 This cloth simulation was an assignment for the course *Animation and Planning in Games*. This project uses Partial Differential Equations and Mass-Spring systems to simulation cloth shape and movement. For an overview of this simulation's features, please visit [my website](https://cadavidson98.github.io/).
 
+## Building the project
+This project uses CMake and Git submodules. When cloning the code, make sure to use --recurse-submodules to clone the GLFW and GLM libraries. Building the project can be done using CMake. Just run CMake on the top directory to automatically add all external libraries and source code to a build command. This project has currently been tested in both Windows and Linux environments.
+
 ## Simulation Parameters
 Creating a cloth requires a number of parameters, these are outlined below:
 - k, The Spring Constant. This defines the cloth's stiffness/elasticity.
