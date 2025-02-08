@@ -30,7 +30,7 @@ Cloth::Cloth(int num_ropes, int num_columns, float k, float kv, float mass,
 	for (int j = 0; j < num_ropes_; j++) {
 		for (int i = 0; i < pts_per_rope_; i++) {
 			int index = j * pts_per_rope_ + i;
-			cloth_pts_[index] = glm::vec3(start_x + j * rest_length_, start_y, z_val - i * rest_length);
+			cloth_pts_[index] = glm::vec3(start_x + j * rest_length_, start_y, z_val + i * rest_length_);
 			vels_[index] = glm::vec3(0, 0, 0);
 			accels_[index] = glm::vec3(0, 0, 0);
 			norms_[index] = glm::vec3(0, 0, -1);
@@ -49,12 +49,12 @@ Cloth::Cloth(int num_ropes, int num_columns, float k, float kv, float mass,
 			int index3 = (j + 1) * pts_per_rope_ + i;
 			int index4 = (j + 1) * pts_per_rope_ + i + 1;
 			indices_[index++] = (index1);
-			indices_[index++] = (index3);
 			indices_[index++] = (index2);
+			indices_[index++] = (index3);
 
 			indices_[index++] = (index2);
-			indices_[index++] = (index3);
 			indices_[index++] = (index4);
+			indices_[index++] = (index3);
 		}
 	}
 	num_tris_ = 2 * (num_ropes_ - 1) * (pts_per_rope_ - 1);
@@ -167,7 +167,7 @@ void Cloth::Update(float dt) {
 			continue;
 		}
 		vels_[i] += cur_forces[i] * 0.5f * dt / mass_;
-		cloth_pts_[i] += vels_[i] * dt;
+		cloth_pts_[i] += vels_[i] * 0.5f * dt;
 	}
 	// now calculate the forces again
 	glm::vec3 *new_forces = calcForces();
@@ -176,6 +176,7 @@ void Cloth::Update(float dt) {
 			continue;
 		}
 		vels_[i] += new_forces[i] * 0.5f * dt / mass_;
+		cloth_pts_[i] += vels_[i] * 0.5f * dt;
 	}
 	delete [] cur_forces;
 	delete [] new_forces;
@@ -234,7 +235,7 @@ glm::vec3* Cloth::calcForces() {
 			glm::vec3 diff = cloth_pts_[cur_pt] - cloth_pts_[lower_index];
 			float string_force = -k_ * (glm::length(diff) - rest_length_);
 
-			// velocity stuff here...
+			// velocity spring force here
 			glm::vec3 string_dir = glm::normalize(diff);
 			double proj_btm_pt = glm::dot(vels_[lower_index], string_dir);
 			double proj_top_pt = glm::dot(vels_[cur_pt], string_dir);
@@ -255,7 +256,7 @@ glm::vec3* Cloth::calcForces() {
 			glm::vec3 diff = cloth_pts_[cur_pt] - cloth_pts_[right_index];
 			float string_force = -k_ * (glm::length(diff) - rest_length_);
 
-			// velocity stuff here...
+			// velocity spring force here
 			glm::vec3 string_dir = glm::normalize(diff);
 			float proj_btm_pt = glm::dot(vels_[right_index], string_dir);
 			float proj_top_pt = glm::dot(vels_[cur_pt], string_dir);

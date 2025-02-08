@@ -15,6 +15,9 @@
 // global variables for window control
 bool pause = true;
 
+int width = 1080;
+int height = 720;
+
 // global variables for camera control
 glm::vec3 camera_pos;
 glm::vec3 camera_fwd;
@@ -53,8 +56,10 @@ static void keyCallback(GLFWwindow* window, int key, int scancode, int action, i
     }
 }
 
-static void windowSizeCallback(GLFWwindow* window, int width, int height) {
+static void windowSizeCallback(GLFWwindow* window, int new_width, int new_height) {
     // Window was resized, recalculate the Projection matrix and resize the OpenGL viewport
+    width = new_width;
+    height = new_height;
     glViewport(0, 0, width, height);
     proj_mat = glm::infinitePerspective(3.14f/8.0f, width / (float)height, 1.0f);
     glUniformMatrix4fv(proj_uniform_loc, 1, GL_FALSE, glm::value_ptr(proj_mat));
@@ -121,7 +126,7 @@ int main(int argc, char* argv[]) {
 
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-    GLFWwindow* window = glfwCreateWindow(1080, 720, "Cloth Sim", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(width, height, "Cloth Sim", NULL, NULL);
     if (!window) {
         // Window or OpenGL context creation failed
         return 1;
@@ -145,29 +150,25 @@ int main(int argc, char* argv[]) {
     std::string vertex_src = loadShaderSource(std::string("oren_nayar_vert.glsl"));
     std::string frag_src = loadShaderSource(std::string("oren_nayar_frag.glsl"));
     GLuint cloth_shader = initShader(vertex_src.c_str(), frag_src.c_str());
-    Cloth cloth(40, 40, 100.0f, 20.0f, 1.0f, 0.25f, 1.5f, -4.5f, 32.0f, 0.5f);
-    // Clamp the top of the cloth so we get a nice swing
-    int val = 0;
-	for (int j = 0; j < 40; ++j) {
-		cloth.LockNode(j, 39, val++ % 1 == 0);
-	}
+    Cloth cloth(40, 40, 6.5f, 2.25f, 0.75f, 1.f, 1.5f, -5.f, 24.f, 5.f);
+
     cloth.initGL(cloth_shader);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glEnable(GL_MULTISAMPLE);
     glClearColor(0.75f, 0.75f, 0.75f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(cloth_shader);
 
-    camera_pos = glm::vec3(20, 37.5, 25);
-    camera_fwd = glm::vec3(-23.375, -11, -24.5);
+    camera_pos = glm::vec3(100, 40, 100);
+    camera_fwd = glm::vec3(0, 0, 0);
     camera_up = glm::vec3(0, 1, 0);
     view_mat = glm::lookAt(camera_pos,
-                           camera_pos + camera_fwd,
+                           glm::vec3(0, 10, 0),
                            camera_up);
-    proj_mat = glm::infinitePerspective(3.14f/8.0f, width / (float)height, 1.0f);
+    proj_mat = glm::infinitePerspective(3.14f/8.0f, width / (float)height, .1f);
     normal_mat = glm::inverse(glm::transpose(view_mat));
-    glm::vec3 light = glm::vec3(1.0f, -1.0f, -1.0f);
+    glm::vec3 light = glm::vec3(-1.0f, -1.0f, -1.0f);
     
     view_uniform_loc = glGetUniformLocation(cloth_shader, "view_matrix");
     proj_uniform_loc = glGetUniformLocation(cloth_shader, "proj_matrix");
@@ -179,11 +180,14 @@ int main(int argc, char* argv[]) {
     glUniformMatrix4fv(normal_uniform_loc, 1, GL_FALSE, glm::value_ptr(normal_mat));
     glUniform3fv(glGetUniformLocation(cloth_shader, "light_dir"), 1, glm::value_ptr(light));
     glUniform3fv(cam_eye_uniform_loc, 1, glm::value_ptr(camera_pos));
+    
+    int frame_num = 0; 
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        if(!pause)
-            cloth.Update(0.02f);
+        if(!pause) {
+            cloth.Update(0.1f);
+        }
         cloth.Draw();
         glfwSwapBuffers(window);
     }

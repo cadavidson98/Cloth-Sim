@@ -24,7 +24,7 @@ void main() {
     normal = 2.0 * normal - 1.0;
     normal = TBN * normal;
     normal = normalize(normal);
-    //normal = normal_in_world_space;
+    normal = normal_in_world_space;
     float ndotl = max(0, dot(normal, to_light));
     float ndotv = max(0, dot(normal, to_eye));
 
@@ -40,5 +40,5 @@ void main() {
     float b = 0.45 * (roughness_sqr) / (roughness_sqr + 0.09);
     vec3 base_clr = texture(diffuse_map, uv).rgb;
     vec3 diffuse = ndotl * (a + b * max(0, cos_phi) * sin(a) * tan(b)) * base_clr;
-    color = vec4(diffuse, 1);
+    color = vec4(diffuse * base_clr, 1);
 }
